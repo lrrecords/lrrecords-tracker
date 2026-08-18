@@ -39,7 +39,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute) {
+  // Don't bounce a logged-in user off /login if they were just sent here
+  // on purpose with an error message (e.g. "no profile row yet") — letting
+  // them see it avoids a redirect loop between here and the (app) layout.
+  const hasError = request.nextUrl.searchParams.has('error');
+
+  if (user && isAuthRoute && !hasError) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
