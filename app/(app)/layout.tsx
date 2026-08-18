@@ -13,16 +13,29 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect('/login');
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single<Profile>();
 
   if (!profile) {
-    // Profile row is created by a DB trigger on sign-up; this should be instant,
-    // but just in case, send them back to login rather than crashing.
-    redirect('/login?error=Your%20profile%20is%20still%20being%20set%20up.%20Please%20try%20again.');
+    // Log the real Postgres/PostgREST error server-side (visible in Vercel's
+    // runtime logs) instead of silently swallowing it — a missing profile
+    // row and a permissions/RLS error look identical to the user otherwise.
+    console.error('[AppLayout] profile fetch failed', {
+      userId: user.id,
+      email: user.email,
+      error: profileError,
+    });
+    const detail = profileError
+      ? ` (${profileError.code ?? 'no code'}: ${profileError.message})`
+      : '';
+    redirect(
+      `/login?error=${encodeURIComponent(
+        `Your profile is still being set up. Please try again.${detail}`
+      )}`
+    );
   }
 
   return (
