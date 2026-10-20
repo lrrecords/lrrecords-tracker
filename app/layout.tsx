@@ -5,7 +5,7 @@ import { APP_NAME } from '@/lib/constants';
 export const metadata: Metadata = {
   title: APP_NAME,
   description:
-    'Weekly task tracker and studio time log for LRRecords work-experience partnership.',
+    'Do tasks for LRRecords and earn studio time (recording, mixing and mastering) or LRR Coin credit.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -59,7 +59,7 @@ export default async function TasksPage() {
             </div>
             <div className="sm:col-span-2">
               <label className="label" htmlFor="description">Details</label>
-              <textarea className="input" id="description" name="description" rows={2} placeholder="Any specifics, links, or context Alec needs" />
+              <textarea className="input" id="description" name="description" rows={2} placeholder="Any specifics, links, or context they need" />
             </div>
             <div>
               <label className="label" htmlFor="week_of">Week of (Friday)</label>

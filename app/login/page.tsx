@@ -16,7 +16,7 @@ export default function LoginPage({
           <CircleLogo size={72} />
           <h1 className="mt-4 text-lg font-bold text-white">{APP_NAME}</h1>
           <p className="mt-1 text-sm text-navy-200">
-            Weekly tasks, evidence sign-off, and studio time tracking.
+            Do tasks for LRRecords, earn studio time (recording, mixing and mastering) or LRR Coin credit.
           </p>
         </div>
 
@@ -53,7 +53,7 @@ export default function LoginPage({
               <h2 className="mb-4 text-base font-semibold text-navy-900">Create account</h2>
               <p className="mb-4 text-xs text-navy-500">
                 The very first account created here automatically becomes the admin
-                account (Brett). Every account after that is a student account (Alec).
+                account. Every account after that is a member account.
               </p>
               <form action={signUp} className="space-y-3">
                 <div>

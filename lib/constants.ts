@@ -1,4 +1,4 @@
-export const APP_NAME = "Alec's LRRecords Job & Music Production Tracker";
+export const APP_NAME = 'LRRecords Job & Music Production Tracker';
 export const APP_SHORT_NAME = 'LRRecords Tracker';
 
 export const TASK_STATUS_LABELS: Record<string, string> = {
