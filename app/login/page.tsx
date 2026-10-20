@@ -16,7 +16,7 @@ export default function LoginPage({
           <CircleLogo size={72} />
           <h1 className="mt-4 text-lg font-bold text-white">{APP_NAME}</h1>
           <p className="mt-1 text-sm text-navy-200">
-            Do tasks for LRRecords, earn studio time (recording, mixing and mastering) or LRR Coin credit.
+            Do tasks, earn studio time. Earn coin for LRRecords tasks and spend it on recording, mixing and mastering.
           </p>
         </div>
 
