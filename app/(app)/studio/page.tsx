@@ -1,8 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
-import { ProgressBar } from '@/components/ProgressBar';
 import { SONG_STATUS_LABELS } from '@/lib/constants';
-import type { Profile, Settings, Song, StudioTimeEntry, StudioUnlock } from '@/lib/database.types';
-import { addSong, addTimeEntry, deleteTimeEntry, markUnlockUsed, updateSongStatus } from './actions';
+import type { Profile, Song, StudioTimeEntry } from '@/lib/database.types';
+import { addSong, addTimeEntry, deleteTimeEntry, updateSongStatus } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,11 +15,8 @@ export default async function StudioPage() {
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single<Profile>();
   if (!profile) return null;
 
-  const [{ data: settings }, { count: signedOffCount }, { data: unlocks }, { data: songs }, { data: entries }, names] =
+  const [{ data: songs }, { data: entries }, names] =
     await Promise.all([
-      supabase.from('settings').select('*').eq('id', 1).single<Settings>(),
-      supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('status', 'signed_off'),
-      supabase.from('studio_unlocks').select('*').order('earned_at', { ascending: false }).returns<StudioUnlock[]>(),
       supabase.from('songs').select('*').order('created_at', { ascending: false }).returns<Song[]>(),
       supabase
         .from('studio_time_entries')
@@ -32,13 +28,6 @@ export default async function StudioPage() {
         .select('id, full_name, email')
         .then(({ data }) => new Map((data ?? []).map((p) => [p.id, p.full_name || p.email]))),
     ]);
-
-  const threshold = settings?.tasks_required_for_studio ?? 4;
-  const done = signedOffCount ?? 0;
-  const progressWithinCycle = done % threshold;
-
-  const availableUnlocks = (unlocks ?? []).filter((u) => u.status === 'available');
-  const usedUnlocks = (unlocks ?? []).filter((u) => u.status === 'used');
 
   const entriesBySong = new Map<string, StudioTimeEntry[]>();
   const generalEntries: StudioTimeEntry[] = [];
@@ -57,51 +46,12 @@ export default async function StudioPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-navy-900">Studio</h1>
-        <p className="text-sm text-navy-500">Studio time unlocks and per-song production log — {totalHours}h logged in total.</p>
+        <p className="text-sm text-navy-500">Your songs and production log — {totalHours}h logged in total.</p>
       </div>
 
-      <div className="card">
-        <h2 className="mb-2 text-sm font-bold text-navy-900">Studio time progress</h2>
-        <ProgressBar value={progressWithinCycle} max={threshold} />
-
-        {availableUnlocks.length > 0 && (
-          <div className="mt-4 space-y-2">
-            {availableUnlocks.map((u) => (
-              <div key={u.id} className="flex items-center justify-between gap-3 rounded-md bg-orange-50 p-3">
-                <div>
-                  <p className="text-sm font-semibold text-orange-800">
-                    🎧 {u.hours}h studio session unlocked!
-                  </p>
-                  <p className="text-xs text-orange-700">
-                    Earned after {u.tasks_completed_count} signed-off tasks · {new Date(u.earned_at).toLocaleDateString('en-AU')}
-                  </p>
-                </div>
-                {profile.role === 'admin' && (
-                  <form action={markUnlockUsed.bind(null, u.id)} className="flex items-center gap-2">
-                    <input type="text" name="notes" placeholder="Session notes (optional)" className="input w-40 text-xs" />
-                    <button className="btn-secondary text-xs">Mark used</button>
-                  </form>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {usedUnlocks.length > 0 && (
-          <details className="mt-3">
-            <summary className="cursor-pointer text-xs font-semibold text-navy-500">
-              {usedUnlocks.length} past session(s) used
-            </summary>
-            <ul className="mt-2 space-y-1 text-xs text-navy-500">
-              {usedUnlocks.map((u) => (
-                <li key={u.id}>
-                  {u.hours}h — used {u.used_at ? new Date(u.used_at).toLocaleDateString('en-AU') : ''}
-                  {u.notes ? ` — ${u.notes}` : ''}
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
+      <div className="card flex flex-wrap items-center justify-between gap-2 text-sm">
+        <p className="text-navy-600">Studio time is now booked with LRR Coin.</p>
+        <a href="/coin" className="btn-primary text-xs">Spend coin</a>
       </div>
 
       <div className="card">

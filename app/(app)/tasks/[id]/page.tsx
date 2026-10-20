@@ -2,11 +2,13 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { StatusBadge } from '@/components/StatusBadge';
 import { DueBadge } from '@/components/DueBadge';
-import { EVIDENCE_TYPE_LABELS } from '@/lib/constants';
+import { EVIDENCE_TYPE_LABELS, TASK_CATEGORY_LABELS } from '@/lib/constants';
+import { CoinBadge, TaskFields } from '@/components/TaskFields';
 import type { Profile, Task, TaskEvidence, TaskNote } from '@/lib/database.types';
 import {
   addEvidence,
   addNote,
+  claimTask,
   deleteEvidence,
   deleteTask,
   toggleSignOff,
@@ -62,6 +64,18 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
 
   const isAdmin = profile.role === 'admin';
   const signedOff = task.status === 'signed_off';
+  const unclaimed = task.is_open && !task.assigned_to;
+  const isMine = task.assigned_to === user.id;
+
+  const { data: members } = isAdmin
+    ? await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('status', 'approved')
+        .eq('role', 'member')
+        .order('full_name')
+        .returns<Pick<Profile, 'id' | 'full_name' | 'email'>[]>()
+    : { data: [] as Pick<Profile, 'id' | 'full_name' | 'email'>[] };
 
   const updateDetails = updateTaskDetails.bind(null, task.id);
   const addEv = addEvidence.bind(null, task.id);
@@ -81,23 +95,31 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-lg font-bold text-navy-900">{task.title}</h1>
+            <p className="mt-0.5 text-xs text-navy-500">
+              {TASK_CATEGORY_LABELS[task.category]}
+              {isAdmin && ` · ${unclaimed ? 'Open to claim' : names.get(task.assigned_to ?? '') ?? 'Unassigned'}`}
+            </p>
             {task.description && <p className="mt-1 text-sm text-navy-600">{task.description}</p>}
           </div>
           <div className="flex items-center gap-2">
+            <CoinBadge value={task.coin_value} />
             <DueBadge dueDate={task.due_date} done={signedOff} />
             <StatusBadge status={task.status} />
           </div>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {!isAdmin && task.status === 'pending' && (
+          {!isAdmin && unclaimed && (
+            <form action={claimTask.bind(null, task.id)}><button className="btn-primary">Claim this task</button></form>
+          )}
+          {!isAdmin && isMine && task.status === 'pending' && (
             <form action={startTask}><button className="btn-secondary">Start task</button></form>
           )}
-          {!isAdmin && (task.status === 'pending' || task.status === 'in_progress') && (
+          {!isAdmin && isMine && (task.status === 'pending' || task.status === 'in_progress') && (
             <form action={submitTask}><button className="btn-primary">Submit for review</button></form>
           )}
-          {!isAdmin && task.status === 'submitted' && (
-            <p className="text-sm text-navy-500">Submitted — waiting on Brett to review and sign off.</p>
+          {!isAdmin && isMine && task.status === 'submitted' && (
+            <p className="text-sm text-navy-500">Submitted — waiting on Brett to review and sign off. Your coin lands when it’s signed off.</p>
           )}
 
           {isAdmin && !signedOff && (
@@ -121,22 +143,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
         <details className="card">
           <summary className="cursor-pointer text-sm font-semibold text-navy-800">Edit task details</summary>
           <form action={updateDetails} className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <label className="label" htmlFor="title">Title</label>
-              <input className="input" id="title" name="title" defaultValue={task.title} required />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="label" htmlFor="description">Details</label>
-              <textarea className="input" id="description" name="description" rows={2} defaultValue={task.description} />
-            </div>
-            <div>
-              <label className="label" htmlFor="week_of">Week of (Friday)</label>
-              <input className="input" id="week_of" name="week_of" type="date" defaultValue={task.week_of ?? ''} />
-            </div>
-            <div>
-              <label className="label" htmlFor="due_date">Deadline</label>
-              <input className="input" id="due_date" name="due_date" type="date" defaultValue={task.due_date ?? ''} />
-            </div>
+            <TaskFields members={members ?? []} task={task} />
             <div className="sm:col-span-2">
               <button type="submit" className="btn-secondary">Save changes</button>
             </div>
@@ -144,6 +151,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
         </details>
       )}
 
+      {(isAdmin || isMine) && (<>
       <div className="card">
         <h2 className="mb-3 text-sm font-bold text-navy-900">Evidence</h2>
 
@@ -220,6 +228,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
           <button type="submit" className="btn-secondary">Post note</button>
         </form>
       </div>
+      </>)}
     </div>
   );
 }

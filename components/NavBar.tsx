@@ -17,22 +17,25 @@ export function NavBar({ profile }: { profile: Profile }) {
           <Link href="/tasks" className="rounded-md px-3 py-1.5 text-navy-100 hover:bg-navy-800 hover:text-white">
             Tasks
           </Link>
+          <Link href="/coin" className="rounded-md px-3 py-1.5 text-navy-100 hover:bg-navy-800 hover:text-white">
+            Coin
+          </Link>
           <Link href="/studio" className="rounded-md px-3 py-1.5 text-navy-100 hover:bg-navy-800 hover:text-white">
             Studio
           </Link>
           {profile.role === 'admin' && (
             <Link
-              href="/admin/settings"
+              href="/admin/members"
               className="rounded-md px-3 py-1.5 text-navy-100 hover:bg-navy-800 hover:text-white"
             >
-              Settings
+              Admin
             </Link>
           )}
         </nav>
 
         <div className="flex items-center gap-3">
           <span className="badge bg-orange-500/15 text-orange-300">
-            {profile.role === 'admin' ? 'Admin' : 'Student'}
+            {profile.role === 'admin' ? 'Admin' : 'Member'}
           </span>
           <span className="hidden text-sm text-navy-200 sm:inline">{profile.full_name || profile.email}</span>
           <form action={signOutAction}>

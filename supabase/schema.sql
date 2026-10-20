@@ -1,3 +1,5 @@
+-- NOTE: after running this file, also run supabase/migrations/20261020_lrr_coin.sql
+-- (LRR Coin: members, coin ledger, catalogue, redemptions, expiry).
 -- ============================================================================
 -- LRRecords Job & Music Production Tracker — database schema
 -- ============================================================================

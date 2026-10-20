@@ -1,5 +1,5 @@
 import { CircleLogo } from '@/components/CircleLogo';
-import { APP_NAME } from '@/lib/constants';
+import { APP_NAME, RELATIONSHIP_OPTIONS, TASK_CATEGORY_LABELS, WEEKLY_HOURS_OPTIONS } from '@/lib/constants';
 import { signIn, signUp } from './actions';
 
 export default function LoginPage({
@@ -11,7 +11,7 @@ export default function LoginPage({
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-navy-900 px-4 py-12">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
           <CircleLogo size={72} />
           <h1 className="mt-4 text-lg font-bold text-white">{APP_NAME}</h1>
@@ -42,18 +42,18 @@ export default function LoginPage({
                 <button type="submit" className="btn-primary w-full">Sign in</button>
               </form>
               <p className="mt-4 text-center text-xs text-navy-500">
-                First time setting this up?{' '}
+                New here?{' '}
                 <a href="/login?mode=signup" className="font-semibold text-orange-600 hover:underline">
-                  Create the first account
+                  Apply to join
                 </a>
               </p>
             </>
           ) : (
             <>
-              <h2 className="mb-4 text-base font-semibold text-navy-900">Create account</h2>
+              <h2 className="mb-1 text-base font-semibold text-navy-900">Apply to join</h2>
               <p className="mb-4 text-xs text-navy-500">
-                The very first account created here automatically becomes the admin
-                account. Every account after that is a member account.
+                Tell us a bit about you. Brett reviews every application, and you can start picking up
+                tasks once you&rsquo;re approved.
               </p>
               <form action={signUp} className="space-y-3">
                 <div>
@@ -68,7 +68,41 @@ export default function LoginPage({
                   <label className="label" htmlFor="password">Password</label>
                   <input className="input" id="password" name="password" type="password" minLength={8} required />
                 </div>
-                <button type="submit" className="btn-primary w-full">Create account</button>
+                <fieldset>
+                  <legend className="label">Tasks you&rsquo;d want to do</legend>
+                  <div className="space-y-1">
+                    {Object.entries(TASK_CATEGORY_LABELS).map(([value, label]) => (
+                      <label key={value} className="flex items-center gap-2 text-sm text-navy-700">
+                        <input type="checkbox" name="task_interests" value={value} className="accent-orange-500" />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <div>
+                  <label className="label" htmlFor="weekly_hours">Time you could give each week</label>
+                  <select className="input" id="weekly_hours" name="weekly_hours" required defaultValue="">
+                    <option value="" disabled>Choose one</option>
+                    {WEEKLY_HOURS_OPTIONS.map((o) => (
+                      <option key={o} value={o}>{o}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label" htmlFor="relationship">Worked with LRRecords before?</label>
+                  <select className="input" id="relationship" name="relationship" required defaultValue="">
+                    <option value="" disabled>Choose one</option>
+                    {RELATIONSHIP_OPTIONS.map((o) => (
+                      <option key={o} value={o}>{o}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label" htmlFor="application_note">Anything else? (optional)</label>
+                  <textarea className="input" id="application_note" name="application_note" rows={3}
+                    placeholder="Links to your music or socials, what you'd like to spend coin on" />
+                </div>
+                <button type="submit" className="btn-primary w-full">Send application</button>
               </form>
               <p className="mt-4 text-center text-xs text-navy-500">
                 Already have an account?{' '}

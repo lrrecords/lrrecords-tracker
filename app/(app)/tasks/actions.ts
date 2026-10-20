@@ -13,29 +13,29 @@ async function requireUser() {
   return { supabase, user: user! };
 }
 
-// ---------- create a task (admin) ----------
-export async function createTask(formData: FormData) {
-  const { supabase, user } = await requireUser();
-
-  const title = String(formData.get('title') || '').trim();
-  if (!title) return;
-
-  const { data: studentProfile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('role', 'student')
-    .limit(1)
-    .maybeSingle();
-
-  await supabase.from('tasks').insert({
-    title,
+// ---------- task fields shared by create + edit (admin) ----------
+function taskFields(formData: FormData) {
+  const assignee = String(formData.get('assigned_to') || '');
+  const isOpen = assignee === 'open';
+  return {
+    title: String(formData.get('title') || '').trim(),
     description: String(formData.get('description') || '').trim(),
     week_of: String(formData.get('week_of') || '') || null,
     due_date: String(formData.get('due_date') || '') || null,
-    assigned_to: studentProfile?.id ?? null,
-    created_by: user.id,
-    status: 'pending',
-  });
+    category: String(formData.get('category') || 'other'),
+    coin_value: Math.max(0, Math.round(Number(formData.get('coin_value') || 0))),
+    is_open: isOpen,
+    assigned_to: isOpen || !assignee ? null : assignee,
+  };
+}
+
+// ---------- create a task (admin) ----------
+export async function createTask(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const fields = taskFields(formData);
+  if (!fields.title) return;
+
+  await supabase.from('tasks').insert({ ...fields, created_by: user.id, status: 'pending' });
 
   revalidatePath('/tasks');
 }
@@ -43,22 +43,25 @@ export async function createTask(formData: FormData) {
 // ---------- edit task details (admin) ----------
 export async function updateTaskDetails(taskId: string, formData: FormData) {
   const { supabase } = await requireUser();
+  const fields = taskFields(formData);
+  if (!fields.title) return;
 
-  await supabase
-    .from('tasks')
-    .update({
-      title: String(formData.get('title') || '').trim(),
-      description: String(formData.get('description') || '').trim(),
-      week_of: String(formData.get('week_of') || '') || null,
-      due_date: String(formData.get('due_date') || '') || null,
-    })
-    .eq('id', taskId);
+  await supabase.from('tasks').update(fields).eq('id', taskId);
 
   revalidatePath(`/tasks/${taskId}`);
   revalidatePath('/tasks');
 }
 
-// ---------- student moves status forward ----------
+// ---------- member claims an open task ----------
+export async function claimTask(taskId: string) {
+  const { supabase } = await requireUser();
+  const { error } = await supabase.rpc('claim_task', { p_task: taskId });
+  if (error) redirect(`/tasks?error=${encodeURIComponent(error.message)}`);
+  revalidatePath('/tasks');
+  redirect(`/tasks/${taskId}`);
+}
+
+// ---------- member moves status forward ----------
 export async function updateTaskStatus(taskId: string, status: 'in_progress' | 'submitted' | 'pending') {
   const { supabase } = await requireUser();
 
@@ -79,7 +82,7 @@ export async function toggleSignOff(taskId: string, signOff: boolean) {
 
   revalidatePath(`/tasks/${taskId}`);
   revalidatePath('/tasks');
-  revalidatePath('/studio');
+  revalidatePath('/coin');
 }
 
 // ---------- delete a task (admin) ----------

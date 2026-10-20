@@ -30,7 +30,15 @@ export async function signUp(formData: FormData) {
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: {
+      data: {
+        full_name: fullName,
+        task_interests: formData.getAll('task_interests').map(String).slice(0, 10),
+        weekly_hours: String(formData.get('weekly_hours') || '').slice(0, 50),
+        relationship: String(formData.get('relationship') || '').slice(0, 80),
+        application_note: String(formData.get('application_note') || '').trim().slice(0, 2000),
+      },
+    },
   });
 
   if (error) {

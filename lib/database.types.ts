@@ -1,7 +1,11 @@
 // Hand-written types mirroring supabase/schema.sql.
 // If you change the schema, update this file to match.
 
-export type Role = 'admin' | 'student';
+export type Role = 'admin' | 'member';
+export type MemberStatus = 'pending' | 'approved' | 'declined' | 'suspended';
+export type TaskCategory = 'content' | 'promotion' | 'playlist' | 'feedback' | 'admin' | 'other';
+export type LedgerReason = 'task' | 'redemption' | 'adjustment' | 'expiry';
+export type RedemptionStatus = 'requested' | 'approved' | 'declined' | 'completed' | 'cancelled';
 export type TaskStatus = 'pending' | 'in_progress' | 'submitted' | 'signed_off';
 export type EvidenceType = 'text' | 'link' | 'file' | 'screenshot';
 export type SongStatus = 'idea' | 'writing' | 'recording' | 'mixing' | 'mastering' | 'released';
@@ -12,6 +16,12 @@ export interface Profile {
   email: string;
   full_name: string;
   role: Role;
+  status: MemberStatus;
+  task_interests: string[];
+  weekly_hours: string;
+  relationship: string;
+  application_note: string;
+  reviewed_at: string | null;
   created_at: string;
 }
 
@@ -25,6 +35,9 @@ export interface Task {
   assigned_to: string | null;
   created_by: string | null;
   sort_order: number;
+  category: TaskCategory;
+  coin_value: number;
+  is_open: boolean;
   signed_off_at: string | null;
   signed_off_by: string | null;
   created_at: string;
@@ -83,6 +96,55 @@ export interface StudioTimeEntry {
   entry_date: string;
   logged_by: string | null;
   notes: string;
+  created_at: string;
+}
+
+export interface CoinLedgerRow {
+  id: string;
+  profile_id: string;
+  amount: number;
+  reason: LedgerReason;
+  task_id: string | null;
+  redemption_id: string | null;
+  source_id: string | null;
+  note: string;
+  expires_at: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface CoinSummary {
+  balance: number;
+  held: number;
+  available: number;
+  next_expiry_amount: number | null;
+  next_expiry_at: string | null;
+}
+
+export interface CatalogueItem {
+  id: string;
+  name: string;
+  kind: string;
+  unit: string;
+  description: string;
+  coin_price: number | null;
+  active: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface Redemption {
+  id: string;
+  profile_id: string;
+  item_id: string;
+  item_name: string;
+  quantity: number;
+  coin_total: number;
+  status: RedemptionStatus;
+  notes: string;
+  admin_note: string;
+  decided_at: string | null;
+  decided_by: string | null;
   created_at: string;
 }
 
